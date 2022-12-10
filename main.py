@@ -1,4 +1,5 @@
 import asyncio
+import sys
 from bs4 import BeautifulSoup
 from get_pages import get_all_pages_html
 from wiki_parser import wiki_url_parse, prepare_link_to_validation
@@ -27,7 +28,10 @@ async def check_url(input_text: str) -> Page:
 
 
 async def make_finale_pages_list(urls: list, start_url: Page, end_url: Page) -> list[Page]:
-    pages = await get_all_pages_html(urls)
+    if urls:
+        pages = await get_all_pages_html(urls)
+    else:
+        pages = list()
     pages.append(start_url)
     pages.insert(0, end_url)
     pages.reverse()
@@ -44,10 +48,15 @@ async def make_article_tree(titles: list[str], nodes_list=list()) -> list[Node]:
     return nodes_list
 
 
-async def prepare_urls_and_start():
-    start_url = await check_url('Choose a start url/title:')
-    end_url = await check_url('Choose an end url/title:')
-    result = await wiki_url_parse([start_url, ], article_to_find=end_url, start=True)
+async def prepare_urls_and_start(parse_speed: int):
+    while True:
+        start_url = await check_url('Choose a start url/title:')
+        end_url = await check_url('Choose an end url/title:')
+        if start_url.url.lower() == end_url.url.lower():
+            print(f"Can't use same one article, please choose different articles..")
+            continue
+        break
+    result = await wiki_url_parse([start_url, ], parse_speed=parse_speed, article_to_find=end_url, start=True)
     if result:
         pages = await make_finale_pages_list(ALL_URLS.path, start_url, end_url)
         titles = [await get_title(path.html) for path in pages]
@@ -58,4 +67,8 @@ async def prepare_urls_and_start():
 
 
 if __name__ == '__main__':
-    asyncio.run(prepare_urls_and_start())
+    args = sys.argv
+    if len(args) == 1:
+        asyncio.run(prepare_urls_and_start(50))
+    else:
+        asyncio.run(prepare_urls_and_start(int(args[1])))
