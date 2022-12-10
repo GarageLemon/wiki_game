@@ -1,0 +1,5 @@
+beautifulsoup4~=4.11.1
+anytree~=2.8.0
+httpx~=0.23.1
+aiostream~=0.4.5
+tqdm~=4.64.1
